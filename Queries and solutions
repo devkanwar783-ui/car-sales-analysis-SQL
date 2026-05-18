@@ -1,0 +1,222 @@
+--Q1.  Show all car manufacturers. 
+SELECT * FROM Car_sales
+
+--Q2.  Find total number of cars in the dataset. 
+SELECT COUNT(*) AS TOTAL_CARS FROM Car_sales
+
+--Q3.  Display all cars where Vehicle_type = 'Passenger'. 
+SELECT * FROM Car_sales
+WHERE Vehicle_type = 'PASSENGER'.
+
+--Q4.  Find all cars with price greater than 30. 
+SELECT * FROM Car_sales
+WHERE Price_in_thousands > 30
+
+--Q5.  Show cars manufactured by Acura. 
+SELECT * FROM Car_sales
+WHERE Manufacturer = 'ACURA'
+
+--Q6.  Find the highest sales value. 
+SELECT TOP 1 * FROM Car_sales
+ORDER BY Sales_in_thousands DESC
+
+--Q7.  Find the lowest engine size. 
+SELECT TOP 1 * FROM Car_sales
+ORDER BY Engine_size 
+
+--Q8.  Display cars ordered by price descending. 
+SELECT * FROM Car_sales
+ORDER BY Price_in_thousands DESC
+
+--Q9.  Find average fuel efficiency. 
+SELECT AVG(FUEL_CAPACITY) AS AVG_FUEL 
+FROM Car_sales
+
+--Q10. Show all cars with horsepower greater than 200. 
+SELECT * FROM Car_sales
+WHERE Horsepower > 200
+ORDER BY Horsepower
+
+--Q11. Find total number of SUVs or Cars. 
+SELECT COUNT(*) FROM  Car_sales
+WHERE Vehicle_type = 'SUV'
+             OR
+      Vehicle_type = 'CAR'
+
+--Q12. Display all cars released after year 2010. 
+SELECT *, YEAR(LATEST_LAUNCH) AS [YEAR] 
+FROM Car_sales
+WHERE YEAR(LATEST_LAUNCH)> 2010
+ORDER BY YEAR
+
+--Q13. Find the most expensive car. 
+SELECT TOP 1 * FROM Car_sales
+ORDER BY Price_in_thousands DESC
+
+--Q14. Find average price of cars by manufacturer. 
+SELECT Manufacturer, AVG(PRICE_IN_THOUSANDS) AS AVG_PRICE
+FROM Car_sales
+GROUP BY Manufacturer
+
+--Q15. Find total sales for each manufacturer. 
+SELECT Manufacturer, SUM(SALES_IN_THOUSANDS) AS TOTAL_SALES 
+FROM Car_sales
+GROUP BY Manufacturer
+
+--Q16. Show manufacturers having average sales greater than 20. 
+SELECT Manufacturer, AVG(SALES_IN_THOUSANDS) AS AVG_SALES
+FROM Car_sales
+GROUP BY Manufacturer
+HAVING AVG(SALES_IN_THOUSANDS) > 20
+
+--Q17. Find top 5 most expensive cars. 
+SELECT TOP 5 * FROM Car_sales
+ORDER BY Price_in_thousands DESC
+
+--Q18. Find the car with highest horsepower in each manufacturer. 
+SELECT * FROM(
+SELECT Manufacturer, Horsepower,
+ROW_NUMBER()OVER(PARTITION BY MANUFACTURER ORDER BY HORSEPOWER) AS RANKS
+FROM Car_sales
+) AS X
+WHERE RANKS = 1
+ORDER BY Horsepower DESC
+
+--Q19. Count how many passenger cars vs regular cars exist. 
+SELECT Vehicle_type, COUNT(MANUFACTURER) AS CNT_MAN 
+FROM Car_sales
+GROUP BY Vehicle_type
+
+--Q20. Find average fuel efficiency by vehicle type. 
+SELECT Vehicle_type, AVG(FUEL_EFFICIENCY) AS AVG_FUEL
+FROM Car_sales
+GROUP BY Vehicle_type
+
+--Q21. Find manufacturers selling more than 3 models. 
+SELECT Manufacturer, COUNT(MODEL) AS CNT_MODEL 
+FROM Car_sales
+GROUP BY Manufacturer
+HAVING COUNT(MODEL)> 3
+ORDER BY CNT_MODEL
+
+--Q22. Find top 3 manufacturers by total sales. 
+SELECT TOP 3 Manufacturer,  SUM(SALES_IN_THOUSANDS) AS TOTAL_SALES
+FROM Car_sales
+GROUP BY Manufacturer
+ORDER BY TOTAL_SALES DESC
+
+--Q23. Calculate average engine size for each manufacturer. 
+SELECT Manufacturer, AVG(ENGINE_SIZE) AS AVG_ENG 
+FROM Car_sales
+GROUP BY Manufacturer
+
+--Q24. Find cars with fuel efficiency below overall average. 
+SELECT * FROM Car_sales
+WHERE Fuel_efficiency < (select avg(Fuel_efficiency) from Car_sales)
+           AND
+     Vehicle_type = 'Car'
+
+--Q25. Display cars where resale value is NULL. 
+SELECT * FROM Car_sales
+WHERE year_resale_value IS NULL
+
+--Q26. Find oldest and newest launch year. 
+SELECT MIN(LATEST_LAUNCH) AS OLDEST,
+MAX(LATEST_LAUNCH) AS NEWEST
+FROM Car_sales
+
+/*Q27.15.	Create a category: 
+•	Cheap (<20) 
+•	Medium (20–40) 
+•	Expensive (>40) 
+using CASE WHEN.*/
+SELECT MANUFACTURER, PRICE_IN_THOUSANDS,
+CASE
+WHEN Price_in_thousands < 20 
+THEN 'CHEAP'
+WHEN Price_in_thousands BETWEEN 20 AND 40 
+THEN 'MEDIUM'
+WHEN Price_in_thousands > 40 
+THEN'EXPENSIVE'
+END AS CATEGORY
+FROM Car_sales
+
+
+--Q28. Rank cars by sales within each manufacturer. 
+SELECT Manufacturer, model, Sales_in_thousands,
+RANK () OVER (PARTITION BY MANUFACTURER ORDER BY SALES_IN_THOUSANDS) AS RANNKS
+FROM Car_sales
+
+--Q29. Find second highest priced car from each manufacturer. 
+SELECT * FROM(
+SELECT Manufacturer, Model, Price_in_thousands,
+RANK() OVER(PARTITION BY MANUFACTURER ORDER BY PRICE_IN_THOUSANDS) AS RANKS
+FROM Car_sales
+) AS X 
+WHERE RANKS = 2
+
+--Q30 Find running total of sales manufacturer-wise. 
+SELECT Manufacturer, Model, Sales_in_thousands,
+SUM(SALES_IN_THOUSANDS) OVER(PARTITION BY Manufacturer ORDER BY SALES_IN_THOUSANDS) AS RUNNING_SALES
+FROM Car_sales
+
+--Q31. Compare each car price with manufacturer average price. 
+SELECT Manufacturer, Model, Price_in_thousands,
+AVG(PRICE_IN_THOUSANDS)OVER(PARTITION BY MANUFACTURER) AS AVG_PRICE,
+Price_in_thousands - AVG(PRICE_IN_THOUSANDS)OVER(PARTITION BY MANUFACTURER) AS DIFF
+FROM Car_sales
+
+--Q32. Find cars whose horsepower is above manufacturer average horsepower. 
+SELECT Manufacturer, Model, Horsepower 
+FROM Car_sales
+WHERE Horsepower > (SELECT AVG(HORSEPOWER) FROM CAR_SALES)
+
+--Q33. Find manufacturer with highest average resale value. 
+SELECT TOP 1 Manufacturer, AVG(YEAR_RESALE_VALUE) AS AVG_RESALE 
+FROM Car_sales
+GROUP BY Manufacturer
+ORDER BY AVG_RESALE DESC
+
+--Q34. Find top-selling car in every vehicle type. 
+SELECT * FROM (
+SELECT Manufacturer, Model, Vehicle_type, 
+SALES_IN_THOUSANDS,
+RANK()OVER(PARTITION BY VEHICLE_TYPE 
+ORDER BY SALES_IN_THOUSANDS DESC) AS RANKS
+FROM Car_sales
+) AS X
+WHERE RANKS = 1
+
+--Q35. Find models having higher sales than previous model using LAG().
+SELECT Manufacturer, model,SALES_IN_THOUSANDS AS SALES ,
+LAG(SALES_IN_THOUSANDS)OVER(ORDER BY MODEL) AS PREV_SALE
+FROM Car_sales
+
+--Q36. Divide cars into 4 price quartiles using NTILE(). 
+SELECT Manufacturer, Model, Price_in_thousands,
+NTILE(4) OVER (ORDER BY PRICE_IN_THOUSANDS) AS QUARTILE
+FROM Car_sales
+
+/*Q37. 7.	Create segmentation: 
+o	Economy 
+o	Mid-range 
+o	Luxury 
+o	Sports 
+8.	Build a market share analysis by manufacturer. 
+ */
+
+ SELECT Manufacturer, Model, Price_in_thousands as Price, Horsepower,
+ CASE
+     WHEN Price_in_thousands < 20 THEN 'ECONOMY'
+     WHEN Price_in_thousands BETWEEN 20 AND 40 
+     AND Horsepower < 250 THEN 'MID RANGE'
+     WHEN Price_in_thousands > 40 
+     AND Horsepower < 300 THEN 'LUXURY'
+
+     WHEN Horsepower >= 300 THEN 'SPORTS'
+     END AS CAR_SEG
+
+ FROM Car_sales
+ ORDER BY CAR_SEG
+
+ select * from Car_sales
